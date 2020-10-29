@@ -193,7 +193,7 @@ class Graph:
 
 
 class GRRT:
-    def __init__(self,start,goal,randArea=[0,10],obstacleList=[(2,4),(2.5,4),(3,3),(3,3.5),(3,4.5),(3,5),(3,4),(3.5,4),(4,4),(4.5,4),(5,4),(5,3.5),(5,3),(5,2.5),(5,2)],goalSampleRate=20,maxIter=100,cmax=4):
+    def __init__(self,start,goal,randArea=[0,10],obstacleList=[(2,4),(2.5,4),(3,3),(3,3.5),(3,4.5),(3,5),(3,4),(3.5,4),(4,4),(4.5,4),(5,4),(5,3.5),(5,3),(5,2.5),(5,2)],goalSampleRate=100,maxIter=10,cmax=4):
 
         self.graph = Graph(size=(19, 19), xrange=(0, 9), yrange=(0, 9), obstacleList=obstacleList)
         self.graphnode = self.graph.nodeList
@@ -223,9 +223,9 @@ class GRRT:
             if self.start != None and self.goal != None:
                 break
             if node.x == start[0] and node.y == start[1]:
-                self.start = copy.deepcopy(node)
+                self.start = node
             elif node.x == goal[0] and node.y == goal[1]:
-                self.goal = copy.deepcopy(node)
+                self.goal = node
         if self.start == None or self.goal == None:
             print('You should redefine the start or goal region')
 
@@ -318,8 +318,6 @@ class GRRT:
             px.append(x_.x)
             py.append(x_.y)
             x = x_
-        #print(px)
-        #print(py)
         sx = Node(x.x,x.y)
         sx.px = px
         sx.py = py
