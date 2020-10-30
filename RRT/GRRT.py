@@ -193,7 +193,7 @@ class Graph:
 
 
 class GRRT:
-    def __init__(self,start,goal,randArea=[0,10],obstacleList=[(2,4),(2.5,4),(3,3),(3,3.5),(3,4.5),(3,5),(3,4),(3.5,4),(4,4),(4.5,4),(5,4),(5,3.5),(5,3),(5,2.5),(5,2)],goalSampleRate=100,maxIter=10,cmax=4):
+    def __init__(self,start,goal,randArea=[0,10],obstacleList=[(2,4),(2.5,4),(3,3),(3,3.5),(3,4.5),(3,5),(3,4),(3.5,4),(4,4),(4.5,4),(5,4),(5,3.5),(5,3),(5,2.5),(5,2)],goalSampleRate=20,maxIter=100,cmax=4):
 
         self.graph = Graph(size=(19, 19), xrange=(0, 9), yrange=(0, 9), obstacleList=obstacleList)
         self.graphnode = self.graph.nodeList

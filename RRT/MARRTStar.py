@@ -12,7 +12,7 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as pat
 
 class MARRTStar():
-    def __init__(self,startlis,goallis,randArea=[0,9],obstacleList=[(2,4),(2.5,4),(3,3),(3,3.5),(3,4.5),(3,5),(3,4),(3.5,4),(4,4),(4.5,4),(5,4),(5,3.5),(5,3),(5,2.5),(5,2)],goalSampleRate=20,maxIter=100,cmax=6,maxspeedi=[0.5,0.5]):
+    def __init__(self,startlis,goallis,randArea=[0,9],obstacleList=[(2,4),(2.5,4),(3,3),(3,3.5),(3,4.5),(3,5),(3,4),(3.5,4),(4,4),(4.5,4),(5,4),(5,3.5),(5,3),(5,2.5),(5,2)],goalSampleRate=20,maxIter=30,cmax=6,maxspeedi=[0.5,0.5]):
 
         self.graph = Graph(size=(19, 19), xrange=randArea, yrange=randArea, obstacleList=obstacleList)
         self.graphnode = self.graph.nodeList
@@ -31,6 +31,9 @@ class MARRTStar():
         self.cmax = cmax
 
         self.nodeList = [[start,] for start in self.startlis]
+
+        self.pathx = [[] for n in range(self.agent_number)]
+        self.pathy = [[] for n in range(self.agent_number)]
 
 
         px = [start.x for start in self.startlis]
@@ -62,53 +65,41 @@ class MARRTStar():
             print(i)
             rndlis = self.sample()
             xnearestlis = self.nearest(rndlis)
-            #print(xnearestlis[0])
-            #print(xnearestlis[0].x,xnearestlis[0].y)
-            #print(xnearestlis[0].px,xnearestlis[0].py)
-            #print(rndlis[0].x, rndlis[0].y)
             xnewlis,pnewlis,c = self.greedy(xnearestlis,rndlis)
-            #print(xnewlis[0])
-            #print(xnewlis[0].x, xnewlis[0].y)
-            #print(xnewlis[0].px, xnewlis[0].py)
-            #check = [xnew==xnearest for xnew,xnearest in zip(xnewlis,xnearestlis)]
+
             if self.calc_dis(xnewlis,xnearestlis) != 0:
+
                 for j in range(self.agent_number):
-                    xnewlis[j].parent = xnearestlis[j]
+                    #xnewlis[j].parent = xnearestlis[j]
                     self.nodeList[j].append(xnewlis[j])
 
-                #xminlis = xnearestlis
+                xminlis = xnearestlis
 
-                '''
                 xnearlis = self.near(xnewlis)
                 #print(xnewlis[0].x, xnewlis[0].y)
 
-
                 xminendlis = None
                 for xnears in xnearlis:
-                    #print(xnears[0].x, xnears[0].y)
                     x_lis,p_lis,costpre = self.greedy(xnears,xnewlis)
-                    #print(xnears[0].x, xnears[0].y)
                     if self.calc_dis(x_lis,xnewlis) == 0:
                         c_ = self.calc_cost(xnears) + costpre
-                        #print(c_,self.calc_cost(xnears) + costpre,self.calc_cost(xnewlis),)
                         if c_ < self.calc_cost(xnewlis):
                             #print('b')
                             xminlis = xnears
                             xminendlis = x_lis
 
-                #print(xminlis[0].x,xminlis[0].y)
-                #print(xnewlis[0].x, xnewlis[0].y)
                 for k in range(self.agent_number):
-                    self.nodeList[k][self.nodeList[k].index(xnewlis[k])].parent = xminlis[k]
+                    indk = self.nodeList[k].index(xnewlis[k])
+                    self.nodeList[k][indk].parent = xminlis[k]
                     if xminendlis:
-                        self.nodeList[k][self.nodeList[k].index(xnewlis[k])].px = xminendlis[k].px
-                        self.nodeList[k][self.nodeList[k].index(xnewlis[k])].py = xminendlis[k].py
-                        self.nodeList[k][self.nodeList[k].index(xnewlis[k])].cost = xminendlis[k].cost
+                        self.nodeList[k][indk].px = xminendlis[k].px
+                        self.nodeList[k][indk].py = xminendlis[k].py
+                        self.nodeList[k][indk].cost = xminendlis[k].cost
 
                 try:
                     xnearlis.pop(xnearlis.index(xminlis))
                 except:
-                    continue
+                    pass
 
                 for xnears in xnearlis:
                     x__lis,p__lis,costpre = self.greedy(xnewlis,xnears)
@@ -116,11 +107,12 @@ class MARRTStar():
                     if self.calc_dis(x__lis,xnears) == 0 and self.calc_cost(xnears) > self.calc_cost(x__lis):
                         for l in range(self.agent_number):
                             #print('a')
-                            self.nodeList[l][self.nodeList.index(xnears[l])].parent = xnewlis[l]
-                            self.nodeList[l][self.nodeList.index(xnears[l])].px = x__lis[l].px
-                            self.nodeList[l][self.nodeList.index(xnears)[l]].py = x__lis[l].py
-                            self.nodeList[l][self.nodeList.index(xnears)[l]].cost = x__lis[l].cost
-                '''
+                            indl = self.nodeList[l].index(xnears[l])
+                            self.nodeList[l][indl].parent = xnewlis[l]
+                            self.nodeList[l][indl].px = x__lis[l].px
+                            self.nodeList[l][indl].py = x__lis[l].py
+                            self.nodeList[l][indl].cost = x__lis[l].cost
+
 
         print('end')
         self.generate_path()
@@ -188,9 +180,14 @@ class MARRTStar():
             costpre = np.zeros(self.agent_number)
             i = 0
             for x in xlisout:
-                #if x.x == dlis[i].x and x.y == dlis[i].y:
-                    #i += 1
-                    #continue
+                if x.x == dlis[i].x and x.y == dlis[i].y:
+                    xlispre[i] = xlisout[i]
+                    costpre[i] = 0
+                    pathlis[i].append(x)
+                    pxlis[i].append(x.x)
+                    pylis[i].append(x.y)
+                    i += 1
+                    continue
                 childrenDisLis = [self.hueristic(child,dlis[i]) for child in x.children]
                 x_ = x.children[childrenDisLis.index(min(childrenDisLis))]
 
@@ -208,7 +205,7 @@ class MARRTStar():
                 xlisout[i] = cx_
                 i += 1
             if not self.CollisionFree(pathlis):
-                print('Not free')
+                #print('Not free')
 
                 j = 0
                 for x in xlispre:
@@ -260,9 +257,13 @@ class MARRTStar():
         rlis = [max(10.0 * math.sqrt((math.log(nnode) / nnode)),4) for nnode in nnodelis]
         for i in range(self.agent_number):
             Jlist = [self.cost(newnodelis[i],node) for node in self.nodeList[i]]
-            #print(Jlist)
-            nearindsLis = [Jlist.index(j) for j in Jlist if j <= rlis[i] ** 2 and j != 0]
-            nearindsLis = set(nearindsLis)
+            nearindsLis = []
+            ind = 0
+            for j in Jlist:
+                if j <= rlis[i]**2 and j!=0:
+                    nearindsLis.append(ind)
+                ind += 1
+            #nearindsLis = [Jlist.index(j) for j in Jlist if j <= rlis[i] ** 2 and j != 0]
             for nearind in nearindsLis:
                 nearNodesLis[i].append(self.nodeList[i][nearind])
         nearNodesLis = self.findind(nearNodesLis)
@@ -274,15 +275,18 @@ class MARRTStar():
         px_draw = []
         py_draw = []
 
-        goalinds = []
+        goalinds = [[] for n in range(self.agent_number)]
+        goalcosts = [float('inf') for n in range(self.agent_number)]
         for i in range(self.agent_number):
             j = 0
             for node in self.nodeList[i]:
-                if node.parent:
-                    if node.x == self.goallis[i].x and node.y == self.goallis[i].y:
-                        goalinds.append(j)
-                        break
+                #if self.calc_simple_dis2(node,self.goallis[i]) <= 1:
+                if node.x == self.goallis[i].x and node.y == self.goallis[i].y:
+                    if node.cost < goalcosts[i]:
+                        goalinds[i] = j
+                        goalcosts[i] = node.cost
                 j += 1
+        #print(goalinds)
         if len(goalinds) != self.agent_number:
             print('You should try to increase iteration number')
             return
@@ -308,6 +312,11 @@ class MARRTStar():
             i += 1
 
         self.graph.add_edge(px_draw,py_draw)
+        for i in range(self.agent_number):
+            px[i].reverse()
+            py[i].reverse()
+            self.pathx[i] = px[i]
+            self.pathy[i] = py[i]
 
     def findind(self,nodelis):
         lenlis = [len(al) for al in nodelis]
@@ -340,6 +349,8 @@ class MARRTStar():
             c += node.cost
 
         return c
+    def calc_simple_dis2(self,node1,node2):
+        return (node1.x-node2.x)**2 + (node1.y-node2.y)**2
 
 
 
@@ -347,14 +358,21 @@ class MARRTStar():
 
 
 if __name__ == '__main__':
-
-    start = [(4,3),(0,0),[1,1]]
-    goal = [(8,8),(7,8),[0,5]]
-    marrt = MARRTStar(start,goal)
+    obstacleList=[(2, 4), (2.5, 4),(2,4.5),(2.5,4.5),(2.5,5),(2,5),(4.5,5),(4.5,5.5),(5,5),(5.5,5),(5,5.5),(5.5,5.5),(2,6),(2.5,6),(2,6.5),(2.5,6.5),(7,4),(7.5,4),(7,4.5),(7.5,4.5)]
+    start = [(8,1),(1,7),[1,1]]
+    goal = [(1,8),(6,1),[7,8]]
+    #start = [(4, 3),  [1, 1]]
+    #goal = [(8, 8),  [0, 5]]
+    marrt = MARRTStar(start,goal,obstacleList=obstacleList)
 
     marrt.planning()
     marrt.graph.drawgraph()
-    #print(marrt.graph.graphMatrix)
+    path = marrt.path
+
+
+
+
+    '''
     for i in range(marrt.agent_number):
         print('agent',i+1)
         for node in marrt.nodeList[i]:
@@ -362,7 +380,7 @@ if __name__ == '__main__':
             if node.parent is not None:
                 print(node.x,node.y,'parent',node.parent.x,node.parent.y)
                 print(node.cost)
-
+    '''
 
 
     '''
