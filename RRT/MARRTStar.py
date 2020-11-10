@@ -11,8 +11,9 @@ import operator
 import matplotlib.pyplot as plt
 import matplotlib.patches as pat
 
+
 class MARRTStar():
-    def __init__(self,startlis,goallis,randArea=[0,9],obstacleList=[(2,4),(2.5,4),(3,3),(3,3.5),(3,4.5),(3,5),(3,4),(3.5,4),(4,4),(4.5,4),(5,4),(5,3.5),(5,3),(5,2.5),(5,2)],goalSampleRate=20,maxIter=30,cmax=6,maxspeedi=[0.5,0.5]):
+    def __init__(self,startlis,goallis,randArea=[0,9],obstacleList=[(2,4),(2.5,4),(3,3),(3,3.5),(3,4.5),(3,5),(3,4),(3.5,4),(4,4),(4.5,4),(5,4),(5,3.5),(5,3),(5,2.5),(5,2)],goalSampleRate=20,maxIter=60,cmax=4,maxspeedi=[0.5,0.5]):
 
         self.graph = Graph(size=(19, 19), xrange=randArea, yrange=randArea, obstacleList=obstacleList)
         self.graphnode = self.graph.nodeList
@@ -75,6 +76,7 @@ class MARRTStar():
 
                 xminlis = xnearestlis
 
+
                 xnearlis = self.near(xnewlis)
                 #print(xnewlis[0].x, xnewlis[0].y)
 
@@ -112,6 +114,7 @@ class MARRTStar():
                             self.nodeList[l][indl].px = x__lis[l].px
                             self.nodeList[l][indl].py = x__lis[l].py
                             self.nodeList[l][indl].cost = x__lis[l].cost
+
 
 
         print('end')
@@ -204,6 +207,7 @@ class MARRTStar():
                 pylis[i].append(cx_.y)
                 xlisout[i] = cx_
                 i += 1
+            '''
             if not self.CollisionFree(pathlis):
                 #print('Not free')
 
@@ -217,6 +221,7 @@ class MARRTStar():
                 c = sum(costlis)
 
                 return xlispre,pathlis,c
+            '''
 
 
 
@@ -236,6 +241,7 @@ class MARRTStar():
         return dis
 
     def CollisionFree(self,pathlis):
+
         for i in range(len(pathlis[0])):
             pxynow = [[] for n in range(self.agent_number)]
             centerlis = [[] for n in range(self.agent_number)]
@@ -254,7 +260,7 @@ class MARRTStar():
     def near(self,newnodelis):
         nearNodesLis = [[] for n in range(self.agent_number)]
         nnodelis = [len(self.nodeList[i]) for i in range(self.agent_number)]
-        rlis = [max(10.0 * math.sqrt((math.log(nnode) / nnode)),4) for nnode in nnodelis]
+        rlis = [max(10.0 * math.sqrt((math.log(nnode) / nnode)),3) for nnode in nnodelis]
         for i in range(self.agent_number):
             Jlist = [self.cost(newnodelis[i],node) for node in self.nodeList[i]]
             nearindsLis = []
@@ -280,19 +286,24 @@ class MARRTStar():
         for i in range(self.agent_number):
             j = 0
             for node in self.nodeList[i]:
-                #if self.calc_simple_dis2(node,self.goallis[i]) <= 1:
+                # if self.calc_simple_dis2(node,self.goallis[i]) <= 1:
                 if node.x == self.goallis[i].x and node.y == self.goallis[i].y:
                     if node.cost < goalcosts[i]:
                         goalinds[i] = j
                         goalcosts[i] = node.cost
                 j += 1
-        #print(goalinds)
+        print(goalinds)
         if len(goalinds) != self.agent_number:
             print('You should try to increase iteration number')
             return
+
+        #goalinds = [goalind[-1] for goalind in goalinds]
+        #print(goalinds)
         i = 0
         for goalind in goalinds:
             goalnode = self.nodeList[i][goalind]
+            goalnode.px.reverse()
+            goalnode.py.reverse()
             for pxs,pys in zip(goalnode.px,goalnode.py):
                 px[i].append(pxs)
                 py[i].append(pys)
@@ -300,9 +311,9 @@ class MARRTStar():
                 py_draw.append(pys)
             while goalnode.parent is not None:
                 print(goalnode.x,goalnode.y,'parent',goalnode.parent.x,goalnode.parent.y)
-                if goalnode.x == goalnode.parent.x and goalnode.y == goalnode.parent.y:
-                    return
                 goalnode = goalnode.parent
+                goalnode.px.reverse()
+                goalnode.py.reverse()
                 for pxs, pys in zip(goalnode.px, goalnode.py):
                     #print('generating now')
                     px[i].append(pxs)
@@ -310,13 +321,15 @@ class MARRTStar():
                     px_draw.append(pxs)
                     py_draw.append(pys)
             i += 1
-
-        self.graph.add_edge(px_draw,py_draw)
+            
+        #self.graph.add_edge(px_draw,py_draw)
         for i in range(self.agent_number):
             px[i].reverse()
             py[i].reverse()
             self.pathx[i] = px[i]
             self.pathy[i] = py[i]
+            
+
 
     def findind(self,nodelis):
         lenlis = [len(al) for al in nodelis]
@@ -358,21 +371,64 @@ class MARRTStar():
 
 
 if __name__ == '__main__':
-    obstacleList=[(2, 4), (2.5, 4),(2,4.5),(2.5,4.5),(2.5,5),(2,5),(4.5,5),(4.5,5.5),(5,5),(5.5,5),(5,5.5),(5.5,5.5),(2,6),(2.5,6),(2,6.5),(2.5,6.5),(7,4),(7.5,4),(7,4.5),(7.5,4.5)]
-    start = [(8,1),(1,7),[1,1]]
-    goal = [(1,8),(6,1),[7,8]]
-    #start = [(4, 3),  [1, 1]]
-    #goal = [(8, 8),  [0, 5]]
+
+
+    obstacleList=[(2, 4), (2.5, 4),(2,4.5),(2.5,4.5),(2.5,5),(2,5),(4.5,5),(4.5,5.5),(5,5),(5.5,5),(5,5.5),(5.5,5.5),(2,6),(2.5,6),(2,6.5),(2.5,6.5),(7,4),(7.5,4),(7,4.5),(7.5,4.5),(6,7),(6.5,7.5),(6,7.5),(6.5,7)]
+    #start = [(8,1),(1,7),(1,1),(4,1),(8.5,1)]
+    #goal = [(1,8),(6,1),(7,8),(4,8),(5.5,8)]
+    start = [(4, 1),  [4, 8]]
+    goal = [(4, 8),  [4, 1]]
     marrt = MARRTStar(start,goal,obstacleList=obstacleList)
 
     marrt.planning()
     marrt.graph.drawgraph()
-    path = marrt.path
+    pathx = marrt.pathx
+    pathy = marrt.pathy
+    print(pathx)
+    print(pathy)
+    #for i in range(marrt.agent_number):
+        #for j in range(len(pathx[0])):
+            #if j+1 > len(pathx[0])-1:
+                #continue
+            #plt.plot([pathx[i][j],pathx[i][j+1]],[pathy[i][j],pathy[i][j+1]],"-g")
+            #plt.pause(0.01)
+    plt.xlim(-2, 10)
+    plt.ylim(-2, 10)
+
+    a = marrt.pathx
+    b = marrt.pathy
+
+    a0 = a[0]
+    b0 = b[0]
+    a1 = a[1]
+    b1 = b[1]
+    #a2 = a[2]
+    #b2 = b[2]
+    #a3 = a[3]
+    #b3 = b[3]
+    for i in range(max(len(a0),len(a1))):
+        try:
+            plt.plot([a0[i],a0[i+1]],[b0[i],b0[i+1]],color='red')
+        except:
+            pass
+        try:
+            plt.plot([a1[i], a1[i + 1]], [b1[i], b1[i + 1]],color='gray')
+        except:
+            pass
+        #try:
+            #plt.plot([a2[i], a2[i + 1]], [b2[i], b2[i + 1]],color='black')
+        #except:
+            #pass
+        #try:
+            #plt.plot([a3[i], a3[i + 1]], [b3[i], b3[i + 1]],color='blue')
+        #except:
+            #pass
+        plt.pause(1)
+    plt.show()
 
 
 
 
-    '''
     for i in range(marrt.agent_number):
         print('agent',i+1)
         for node in marrt.nodeList[i]:
@@ -380,7 +436,7 @@ if __name__ == '__main__':
             if node.parent is not None:
                 print(node.x,node.y,'parent',node.parent.x,node.parent.y)
                 print(node.cost)
-    '''
+
 
 
     '''

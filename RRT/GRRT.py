@@ -4,13 +4,12 @@
 import random
 import math
 import copy
-import _pickle as cPickle
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.patches as pat
 import sys
 
-sys.setrecursionlimit(10000)
+#sys.setrecursionlimit(10000)
 
 class Node:
     def __init__(self,x,y):
@@ -143,10 +142,10 @@ class Graph:
         plt.scatter(self.xx,self.yy)
         ax = plt.subplot()
         self.draw_obstacle(ax)
-        self.search_pair()
+        #self.search_pair()
         plt.xlim(self.xrange[0]-1,self.xrange[1]+1)
         plt.ylim(self.yrange[0]-1,self.yrange[1]+1)
-        plt.show()
+        #plt.show()
 
 
     def draw_obstacle(self,ax):
@@ -193,9 +192,15 @@ class Graph:
 
 
 class GRRT:
-    def __init__(self,start,goal,randArea=[0,10],obstacleList=[(2,4),(2.5,4),(3,3),(3,3.5),(3,4.5),(3,5),(3,4),(3.5,4),(4,4),(4.5,4),(5,4),(5,3.5),(5,3),(5,2.5),(5,2)],goalSampleRate=20,maxIter=100,cmax=4):
+    def __init__(self,start,goal,randArea=[0,10],obstacleList=[(2,4),(2.5,4),(3,3),(3,3.5),(3,4.5),(3,5),(3,4),(3.5,4),(4,4),(4.5,4),(5,4),(5,3.5),(5,3),(5,2.5),(5,2)],size = (19,19),xrange=(0,9),yrange=(0,9),agentpath=[[[2.5,3,3.5,4,4.5,4.5],[1.5,1.5,1.5,1.5,1.5,1]]],goalSampleRate=20,maxIter=100,cmax=4,animation=True):
 
-        self.graph = Graph(size=(19, 19), xrange=(0, 9), yrange=(0, 9), obstacleList=obstacleList)
+        self.old_obstacleList = copy.copy(obstacleList)
+        self.obstacleList = obstacleList
+        self.size = size
+        self.xrange = xrange
+        self.yrange = yrange
+        self.old_graph = Graph(size=self.size, xrange=self.xrange, yrange=self.yrange, obstacleList=self.old_obstacleList)
+        self.graph = Graph(size=self.size, xrange=self.xrange, yrange=self.yrange, obstacleList=self.obstacleList)
         self.graphnode = self.graph.nodeList
 
         self.start = None
@@ -203,7 +208,7 @@ class GRRT:
 
         self.get_start_goal(start,goal)
 
-        self.obstacleList = obstacleList
+        self.agentpath = agentpath
 
         self.goalSampleRate = goalSampleRate
         self.maxIter = maxIter
@@ -213,23 +218,91 @@ class GRRT:
         self.nodeList = [self.start,]
         self.cmax = cmax
 
-        px = [self.start.x]
-        py = [self.start.y]
+        self.px = [self.start.x]
+        self.py = [self.start.y]
 
-        self.graph.add_edge(px,py)
+        #self.graph.add_edge(self.px,self.py)
+
+        self.animation = animation
+
 
     def get_start_goal(self,start,goal):
         for node in self.graphnode:
             if self.start != None and self.goal != None:
                 break
             if node.x == start[0] and node.y == start[1]:
-                self.start = node
+                self.start = Node(node.x,node.y)
+                self.start.children = node.children
             elif node.x == goal[0] and node.y == goal[1]:
-                self.goal = node
+                self.goal = Node(node.x,node.y)
+                self.goal.children = node.children
         if self.start == None or self.goal == None:
             print('You should redefine the start or goal region')
 
-    def planning(self,animation=False):
+    def int_planning(self):
+        i = 0
+        while True:
+            print(i)
+            self.planning()
+            if self.course_free():
+                print('ok')
+                break
+            i += 1
+
+    def course_free(self):
+        course_length = len(self.px)
+        agentn = len(self.agentpath)
+        for i in range(agentn):
+            agentpathi = copy.copy(self.agentpath[i])
+            agentcourse_length = len(self.agentpath[i][0])
+            if agentcourse_length == course_length:
+                pass
+            elif agentcourse_length < course_length:
+                for n in range(course_length-agentcourse_length):
+                    agentpathi[0].append(agentpathi[0][-1])
+                    agentpathi[1].append(agentpathi[1][-1])
+            elif agentcourse_length > course_length:
+                agentpathi[0] = agentpathi[0][:course_length]
+                agentpathi[1] = agentpathi[1][:course_length]
+            for j in range(course_length):
+                agentinow = [agentpathi[0][j],agentpathi[1][j]]
+                pathnow = [self.px[j],self.py[j]]
+                print(agentinow)
+                print(pathnow)
+                print('-------')
+                if agentinow == pathnow:
+                    self.obstacleList.append(agentinow)
+                    self.graph = Graph(size=self.size, xrange=self.xrange, yrange=self.yrange, obstacleList=self.obstacleList)
+                    self.graphnode = self.graph.nodeList
+                    self.px = self.px[:j]
+                    self.py = self.py[:j]
+                    start = (self.px[-1],self.py[-1])
+                    goal = (self.goal.x,self.goal.y)
+                    self.start = None
+                    self.goal = None
+                    self.get_start_goal(start,goal)
+                    self.nodeList = [self.start,]
+                    print(start)
+                    print(self.start.x,self.start.y)
+                    return False
+                if j < course_length-1:
+                    agentifu = [(agentpathi[0][j]+agentpathi[0][j+1])/2,(agentpathi[1][j]+agentpathi[1][j+1])/2]
+                    pathfu = [(self.px[j]+self.px[j+1])/2,(self.py[j]+self.py[j+1])/2]
+                    if agentifu == pathfu:
+                        self.obstacleList.append(agentinow)
+                        self.graph = Graph(size=(19, 19), xrange=(0, 9), yrange=(0, 9), obstacleList=self.obstacleList)
+                        self.graphnode = self.graph.nodeList
+                        self.px = self.px[:j]
+                        self.py = self.py[:j]
+                        start = (self.px[-1], self.py[-1])
+                        goal = (self.goal.x, self.goal.y)
+                        self.get_start_goal(start, goal)
+                        self.nodeList = [self.start,]
+                        return False
+        return True
+
+
+    def planning(self):
         print('start planning')
         for i in range(self.maxIter):
             rnd = self.sample()
@@ -238,10 +311,6 @@ class GRRT:
 
             xnew,pnew = self.greedy(xnearest,rnd)
 
-            #print(rnd.x,rnd.y)
-            #print(xnew.x,xnew.y)
-            #print(xnew.px)
-            #print(xnew.py)
 
             if len(pnew)!=0:
                 self.nodeList.append(xnew)
@@ -253,10 +322,7 @@ class GRRT:
                     x_,p_ = self.greedy(xnear,xnew)
                     if self.calc_cost(x_,xnew)==0 :
                         c_ = x_.cost
-                        #print('in')
-                        #print(c_,xnew.cost)
                         if c_ < xnew.cost:
-                            #print('in')
                             xmin = xnear
                             xminend = x_
 
@@ -283,15 +349,21 @@ class GRRT:
                         self.nodeList[self.nodeList.index(xnear)].py = x__.py
                         self.nodeList[self.nodeList.index(xnear)].cost = x__.cost
 
-
+        print('end')
         self.generate_path()
 
 
     def sample(self):
         if random.randint(0, 100) > self.goalSampleRate:
-            rnd = self.graphnode[random.randint(0,len(self.graphnode)-1)]
+            s = self.graphnode[random.randint(0,len(self.graphnode)-1)]
+            rnd = Node(s.x, s.y)
+            rnd.cost = 0
+            rnd.children = s.children
         else:
-            rnd = self.goal
+            s = self.goal
+            rnd = Node(s.x, s.y)
+            rnd.cost = 0
+            rnd.children = s.children
         return rnd
 
     def nearest(self,rnd):
@@ -301,7 +373,9 @@ class GRRT:
         return xnearest
 
     def greedy(self,s,d):
-        x = s
+        x = Node(s.x,s.y)
+        x.cost = s.cost
+        x.children = s.children
         c = 0
         path = []
         px = []
@@ -313,17 +387,20 @@ class GRRT:
                 break
             childrenDisLis = [self.hueristic(child,d) for child in x.children]
             x_ = x.children[childrenDisLis.index(min(childrenDisLis))]
-            c += self.calc_cost(x,x_)
-            path.append(x_)
-            px.append(x_.x)
-            py.append(x_.y)
-            x = x_
-        sx = Node(x.x,x.y)
-        sx.px = px
-        sx.py = py
-        sx.cost = s.cost + c
-        sx.children = x.children
-        return sx,path
+
+            cx_ = Node(x_.x, x_.y)
+            cx_.children = x_.children
+
+            c += self.calc_cost(x,cx_)
+            path.append(cx_)
+            px.append(cx_.x)
+            py.append(cx_.y)
+            x = cx_
+        x.px = px
+        x.py = py
+        x.cost = s.cost + c
+        x.children = x.children
+        return x,path
 
     def hueristic(self,node1,node2):
         # you can difine your own hueristic here
@@ -343,6 +420,11 @@ class GRRT:
         r = max(50.0 * math.sqrt((math.log(nnode) / nnode)),4)
         Jlist = [(node.x - newNode.x) ** 2 + (node.y - newNode.y) ** 2 for node in self.nodeList]
         nearinds = [Jlist.index(i) for i in Jlist if i <= r ** 2 and i != 0]
+        ind = 0
+        for i in Jlist:
+            if i <= r**2 and i != 0:
+                nearinds.append(ind)
+            ind += 1
         for i in nearinds:
             nearNodes.append(self.nodeList[i])
         return nearNodes
@@ -351,28 +433,53 @@ class GRRT:
         i = 0
         px = []
         py = []
+        goalindlis = []
         for node in self.nodeList:
             if node.x == self.goal.x and node.y == self.goal.y:
-                goalind = i
+                #goalind = i
+                goalindlis.append(i)
                 break
             i += 1
-        bestgoalnode = self.nodeList[goalind]
+        #print(goalindlis)
+        #goalnodeCos = [self.nodeList[goalnodeind].cost for goalnodeind in goalindlis]
+        #bestgoalind = goalindlis[goalnodeCos.index(min(goalnodeCos))]
+        bestgoalnode = self.nodeList[goalindlis[0]]
+        bestgoalnode.px.reverse()
+        bestgoalnode.py.reverse()
         for pxs,pys in zip(bestgoalnode.px,bestgoalnode.py):
             px.append(pxs)
             py.append(pys)
         while bestgoalnode.parent is not None:
             print('genrating now')
-            preparent = bestgoalnode.parent.parent
-            if preparent == bestgoalnode.parent:
-                print('try again')
-                break
-                return
             bestgoalnode = bestgoalnode.parent
+            bestgoalnode.px.reverse()
+            bestgoalnode.py.reverse()
             for pxs,pys in zip(bestgoalnode.px,bestgoalnode.py):
                 px.append(pxs)
                 py.append(pys)
-        #print(px,py)
-        self.graph.add_edge(px,py)
+
+        px.reverse()
+        py.reverse()
+
+        for i in range(len(px)):
+            self.px.append(px[i])
+            self.py.append(py[i])
+
+    def drawpath(self):
+        self.old_graph.drawgraph()
+        for i in range(len(self.px)):
+            try:
+                plt.plot([self.px[i], self.px[i + 1]], [self.py[i], self.py[i + 1]], color='red')
+            except:
+                pass
+            if self.animation:
+                plt.pause(0.1)
+
+        plt.show()
+
+
+
+
 
 
 
@@ -381,12 +488,13 @@ class GRRT:
 
 if __name__ == '__main__':
 
-    start = [4,3]
-    goal = [8,8]
+    start = [4,8]
+    goal = [4,5]
+    agentpath = [[[3,3.5,4,4.5,4.5],[1.5,1.5,1.5,1.5,1]]]
     grrt = GRRT(start,goal)
     grrt.planning()
 
-    grrt.graph.drawgraph()
+    grrt.drawpath()
 
 
     #graph = Graph()
