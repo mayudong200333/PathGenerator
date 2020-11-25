@@ -1,5 +1,6 @@
 # the base of the MARRT
 # author mayudong
+# bug selfpx(-1)
 
 import random
 import math
@@ -138,8 +139,8 @@ class Graph:
 
 
     def drawgraph(self):
-        plt.figure()
-        plt.scatter(self.xx,self.yy)
+        fig = plt.figure()
+        plt.scatter(self.xx,self.yy,s=10)
         ax = plt.subplot()
         self.draw_obstacle(ax)
         #self.search_pair()
@@ -242,7 +243,7 @@ class GRRT:
     def int_planning(self):
         i = 0
         while True:
-            print(i)
+            #print(i)
             self.planning()
             if self.course_free():
                 print('ok')
@@ -267,9 +268,9 @@ class GRRT:
             for j in range(course_length):
                 agentinow = [agentpathi[0][j],agentpathi[1][j]]
                 pathnow = [self.px[j],self.py[j]]
-                print(agentinow)
-                print(pathnow)
-                print('-------')
+                #print(agentinow)
+                #print(pathnow)
+                #print('-------')
                 if agentinow == pathnow:
                     self.obstacleList.append(agentinow)
                     self.graph = Graph(size=self.size, xrange=self.xrange, yrange=self.yrange, obstacleList=self.obstacleList)
@@ -282,23 +283,27 @@ class GRRT:
                     self.goal = None
                     self.get_start_goal(start,goal)
                     self.nodeList = [self.start,]
-                    print(start)
-                    print(self.start.x,self.start.y)
+                    #print(start)
+                    #print(self.start.x,self.start.y)
                     return False
                 if j < course_length-1:
                     agentifu = [(agentpathi[0][j]+agentpathi[0][j+1])/2,(agentpathi[1][j]+agentpathi[1][j+1])/2]
                     pathfu = [(self.px[j]+self.px[j+1])/2,(self.py[j]+self.py[j+1])/2]
                     if agentifu == pathfu:
                         self.obstacleList.append(agentinow)
+                        #self.obstacleList.append(agentifuture)
                         self.graph = Graph(size=(19, 19), xrange=(0, 9), yrange=(0, 9), obstacleList=self.obstacleList)
                         self.graphnode = self.graph.nodeList
                         self.px = self.px[:j]
                         self.py = self.py[:j]
                         start = (self.px[-1], self.py[-1])
                         goal = (self.goal.x, self.goal.y)
+                        self.start = None
+                        self.goal = None
                         self.get_start_goal(start, goal)
                         self.nodeList = [self.start,]
                         return False
+
         return True
 
 
@@ -450,7 +455,7 @@ class GRRT:
             px.append(pxs)
             py.append(pys)
         while bestgoalnode.parent is not None:
-            print('genrating now')
+            #print('genrating now')
             bestgoalnode = bestgoalnode.parent
             bestgoalnode.px.reverse()
             bestgoalnode.py.reverse()
@@ -488,11 +493,11 @@ class GRRT:
 
 if __name__ == '__main__':
 
-    start = [4,8]
-    goal = [4,5]
+    start = [4,2]
+    goal = [8,8]
     agentpath = [[[3,3.5,4,4.5,4.5],[1.5,1.5,1.5,1.5,1]]]
     grrt = GRRT(start,goal)
-    grrt.planning()
+    grrt.int_planning()
 
     grrt.drawpath()
 
