@@ -17,7 +17,7 @@ class Node:
 
 class RRTStar:
 
-    def __init__(self,start,goal,obstacleList,randArea,expanDis=0.5,goalSampleRate=20,maxIter=500):
+    def __init__(self,start,goal,obstacleList,randArea,expanDis=0.5,goalSampleRate=20,maxIter=1000):
         self.start = Node(start[0],start[1])
         self.end = Node(goal[0],goal[1])
         self.minrand = randArea[0]
